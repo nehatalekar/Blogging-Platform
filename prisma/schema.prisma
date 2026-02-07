@@ -1,0 +1,39 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  username  String   @unique
+  fullName  String
+  profileImage String?
+  password  String
+  otp       String?
+  expiry    BigInt?
+  isVerified Boolean @default(false)
+  createdAt DateTime @default(now())
+  blogs     Blog[]
+}
+
+model Blog {
+  id        Int      @id @default(autoincrement())
+  title     String
+  slug      String   @unique
+  description String
+  content   String
+  author    String
+  postImage String?
+  profileImage String?
+  tag       String   @default("General")
+  status    String   @default("published")
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
