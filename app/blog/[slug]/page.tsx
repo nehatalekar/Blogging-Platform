@@ -1,56 +1,70 @@
 import React from "react";
 import { notFound } from "next/navigation";
-import fs from "fs";
-import path from "path";
-import matter from "gray-matter";
 import Image from "next/image";
+import { PrismaClient } from "@prisma/client";
 
 type Props = {
   params: { slug: string };
 };
 
+const prisma = new PrismaClient();
+
 export default async function PostPage({ params }: Props) {
   const { slug } = await params; // Ensure params is awaited
 
-  const postsDirectory = path.join(process.cwd(), "content/posts");
-  const filePath = path.join(postsDirectory, `${slug}.mdx`);
+  // Fetch blog from database using slug
+  const blog = await prisma.blog.findUnique({
+    where: { slug },
+    include: { user: true },
+  });
 
-  if (!fs.existsSync(filePath)) return notFound();
+  if (!blog) return notFound();
 
-  const fileContents = fs.readFileSync(filePath, "utf8");
-  const { data: meta, content: html } = matter(fileContents);
-
-  const title = meta.title || slug;
-  const author = meta.author || "";
-  const date = meta.date || "";
-  const description = meta.description || "";
-  const image = meta.postImage || null;
+  const title = blog.title;
+  const author = blog.author;
+  const date = blog.createdAt?.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  }) || "";
+  const description = blog.description;
+  const image = blog.postImage;
 
   return (
-    <main className="max-w-3xl mx-auto py-12 px-4">
-      <article>
-        <header className="mb-6">
-          <h1 className="text-3xl font-bold mb-2">{title}</h1>
-          <div className="text-sm text-gray-500">
-            {author} · {date}
+    <main className="bg-white min-h-screen py-12 px-4">
+      <article className="max-w-3xl mx-auto">
+        <header className="mb-8 pb-8 border-b">
+          <h1 className="text-4xl font-bold mb-4 text-gray-900">{title}</h1>
+          <div className="flex items-center justify-between text-gray-600">
+            <div>
+              <span className="font-semibold">{author}</span>
+              <span className="mx-2">·</span>
+              <span>{date}</span>
+            </div>
+            {blog.tag && (
+              <span className="inline-block bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded">
+                {blog.tag}
+              </span>
+            )}
           </div>
-          {description ? <p className="text-gray-700 mt-3">{description}</p> : null}
-          {image ? (
-            <div className="mt-4">
+          {description && <p className="text-lg text-gray-700 mt-4">{description}</p>}
+          {image && (
+            <div className="mt-6 rounded-lg overflow-hidden">
               <Image
                 src={`/${image}`}
                 alt={title}
                 width={900}
                 height={400}
-                className="rounded-md object-cover w-full"
+                priority
+                className="w-full h-auto object-cover"
               />
             </div>
-          ) : null}
+          )}
         </header>
 
-        <section
-          className="prose max-w-none"
-          dangerouslySetInnerHTML={{ __html: html }}
+        <section 
+          className="prose prose-sm md:prose-base lg:prose-lg max-w-none prose-headings:font-bold prose-headings:mt-8 prose-headings:mb-4 prose-p:my-4 prose-a:text-blue-600 prose-a:underline prose-ul:my-4 prose-ol:my-4 prose-li:my-2 prose-blockquote:border-l-4 prose-blockquote:border-blue-400 prose-blockquote:pl-4 prose-blockquote:italic prose-code:bg-gray-100 prose-code:px-2 prose-code:py-1 prose-code:rounded"
+          dangerouslySetInnerHTML={{ __html: blog.content }}
         />
       </article>
     </main>

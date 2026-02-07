@@ -89,13 +89,26 @@ export default function BlogModal({
   const handleSaveDraft = async () => {
     setIsSaving(true);
     const imagePath = await uploadImage();
-    await onSaveDraft({
-      title,
-      description,
-      postImage: imagePath,
-      content,
-      slug: initial?.slug,
-    });
+    if (initial?.id) {
+      // Update existing draft
+      await onUpdate({
+        id: initial.id,
+        title,
+        description,
+        postImage: imagePath,
+        content,
+        status: initial?.status,
+      });
+    } else {
+      // Create new draft
+      await onSaveDraft({
+        title,
+        description,
+        postImage: imagePath,
+        content,
+        slug: initial?.slug,
+      });
+    }
     setIsSaving(false);
     onClose();
   };
@@ -161,34 +174,30 @@ export default function BlogModal({
 
           <div>
             <label className="block text-sm font-medium">Content</label>
-            <RichTextEditor initialContent={content} onChange={setContent} />
+            <RichTextEditor key={initial?.id || 'new'} initialContent={content} onChange={setContent} />
           </div>
         </div>
 
         <div className="mt-4 flex items-center justify-end gap-2">
-          <button
-            onClick={handleSaveDraft}
-            className="px-4 py-2 bg-gray-100 rounded"
-            disabled={isSaving}
-          >
-            Save Draft
-          </button>
+          {(!initial?.id || initial?.status === "draft") && (
+            <button
+              onClick={handleSaveDraft}
+              className="px-4 py-2 bg-gray-100 rounded"
+              disabled={isSaving}
+            >
+              {initial?.id ? "Update Draft" : "Save Draft"}
+            </button>
+          )}
 
-          <button
-            onClick={handleUpdate}
-            className="px-4 py-2 bg-yellow-100 rounded"
-            disabled={isSaving || !initial?.id}
-          >
-            Edit
-          </button>
-
-          <button
-            onClick={handleDelete}
-            className="px-4 py-2 bg-red-100 rounded"
-            disabled={isSaving || !initial?.id}
-          >
-            Delete
-          </button>
+          {initial?.id && (
+            <button
+              onClick={handleDelete}
+              className="px-4 py-2 bg-red-100 rounded"
+              disabled={isSaving}
+            >
+              Delete
+            </button>
+          )}
 
           <button
             onClick={handlePublish}

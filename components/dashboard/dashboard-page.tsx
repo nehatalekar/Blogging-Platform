@@ -50,11 +50,21 @@ export default function Dashboard() {
   };
 
   const handleSaveDraft = async (data: any) => {
-    await fetch("/api/blog", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...data, status: "draft" }),
-    });
+    if (data.id) {
+      // Update existing draft
+      await fetch("/api/blog", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...data, status: "draft" }),
+      });
+    } else {
+      // Create new draft
+      await fetch("/api/blog", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...data, status: "draft" }),
+      });
+    }
     await fetchPosts();
   };
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import "quill/dist/quill.snow.css";
 
 type Props = {
@@ -11,6 +11,8 @@ type Props = {
 export default function RichTextEditor({ initialContent = "", onChange }: Props) {
   const editorRef = useRef<HTMLDivElement | null>(null);
   const quillRef = useRef<any | null>(null);
+  const isInitializingRef = useRef(true);
+  const lastContentRef = useRef<string>("");
 
   useEffect(() => {
     let mounted = true;
@@ -37,7 +39,11 @@ export default function RichTextEditor({ initialContent = "", onChange }: Props)
       });
 
       // set initial content
-      quillRef.current.root.innerHTML = initialContent || '';
+      if (initialContent) {
+        quillRef.current.root.innerHTML = initialContent;
+        lastContentRef.current = initialContent;
+      }
+      isInitializingRef.current = false;
 
       // limit editor content height and enable internal scrolling
       try {
@@ -48,19 +54,27 @@ export default function RichTextEditor({ initialContent = "", onChange }: Props)
       }
 
       quillRef.current.on('text-change', () => {
-        onChange?.(quillRef.current.root.innerHTML);
+        const newContent = quillRef.current.root.innerHTML;
+        lastContentRef.current = newContent;
+        onChange?.(newContent);
       });
     })();
 
-    return () => { mounted = false; if (quillRef.current) { quillRef.current = null; } };
+    return () => { 
+      mounted = false; 
+      if (quillRef.current) { 
+        quillRef.current = null;
+      } 
+    };
   }, []);
 
+  // Only update content when initialContent changes from external sources (not from user typing)
   useEffect(() => {
-    if (quillRef.current) {
-      const current = quillRef.current;
-      if ((current.root && current.root.innerHTML) !== initialContent) {
-        current.root.innerHTML = initialContent || '';
-      }
+    if (quillRef.current && !isInitializingRef.current && initialContent && initialContent !== lastContentRef.current) {
+      quillRef.current.root.innerHTML = initialContent;
+      lastContentRef.current = initialContent;
+      const length = quillRef.current.getLength();
+      quillRef.current.setSelection(length);
     }
   }, [initialContent]);
 
