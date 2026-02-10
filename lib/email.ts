@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
   port: process.env.SMTP_PORT ? Number(process.env.SMTP_PORT) : 587,
@@ -22,7 +23,8 @@ export async function sendOtpEmail(
     );
   }
 
-  if (!process.env.EMAIL_FROM) {
+  // Log warning only in development
+  if (!process.env.EMAIL_FROM && process.env.NODE_ENV === "development") {
     console.warn(
       `Warning: EMAIL_FROM not set. Using ${fromAddress} as the From header. Some SMTP relays require a verified sender address; set EMAIL_FROM to a verified email in your Brevo dashboard.`
     );
@@ -46,6 +48,8 @@ export async function sendOtpEmail(
   } catch (error: any) {
     // Provide more context including response if available
     const details = error.response || error.message || String(error);
-    throw new Error(`Error sending OTP email: ${details}`);
+    const errorMsg = `Failed to send OTP email to ${email}: ${details}`;
+    console.error(errorMsg);
+    throw new Error(errorMsg);
   }
 }

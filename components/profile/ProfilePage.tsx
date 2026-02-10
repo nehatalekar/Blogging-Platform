@@ -1,8 +1,10 @@
 'use client';
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
+import { User } from "lucide-react";
 
 export default function ProfilePage() {
   const { data: session, status } = useSession();
@@ -12,6 +14,7 @@ export default function ProfilePage() {
   const [uploading, setUploading] = useState(false);
   const [selectedImagePath, setSelectedImagePath] = useState<string | null>(null);
   const [isEditingFullName, setIsEditingFullName] = useState(false);
+  const [navProfileImage, setNavProfileImage] = useState<string | null>(null);
   const router = useRouter();
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
@@ -52,6 +55,42 @@ export default function ProfilePage() {
     document.addEventListener('mousedown', onDocClick);
     return () => document.removeEventListener('mousedown', onDocClick);
   }, []);
+
+  // Fetch user profile image from API for navbar
+  useEffect(() => {
+    const fetchProfileImage = async () => {
+      if (!session?.user) {
+        setNavProfileImage(null);
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/user');
+        if (res.ok) {
+          const data = await res.json();
+          setNavProfileImage(data.user?.profileImage || null);
+        }
+      } catch (err) {
+        // Fallback to session image if API fails
+        setNavProfileImage((session as any)?.user?.image || null);
+      }
+    };
+
+    fetchProfileImage();
+  }, [session?.user]);
+
+  // Listen for profile updates
+  const handleProfileUpdate = useCallback((e: Event) => {
+    const detail = (e as CustomEvent).detail as { profileImage?: string | null } | undefined;
+    if (detail && typeof detail.profileImage !== 'undefined') {
+      setNavProfileImage(detail.profileImage || null);
+    }
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener('profile-updated', handleProfileUpdate as EventListener);
+    return () => window.removeEventListener('profile-updated', handleProfileUpdate as EventListener);
+  }, [handleProfileUpdate]);
 
   const handleFileChange = async (file?: File) => {
     if (!file) return null;
@@ -190,36 +229,51 @@ export default function ProfilePage() {
                 onClick={() => setDropdownOpen(!dropdownOpen)}
                 className="flex items-center justify-center rounded-full focus:outline-none border border-gray-200 p-1"
               >
-                <img
-                  src={session.user?.image || '/logo.jpg'}
-                  alt={session.user?.name || 'Profile'}
-                  width={1000}
-                  height={1000}
-                  className="rounded-full object-cover w-12 h-12"
-                />
+                {navProfileImage ? (
+                  <Image
+                    src={navProfileImage}
+                    alt={session.user?.name || 'Profile'}
+                    width={1000}
+                    height={1000}
+                    className="rounded-full object-cover w-12 h-12"
+                  />
+                ) : (
+                  <div className="rounded-full bg-blue-500 text-white w-12 h-12 flex items-center justify-center font-semibold">
+                    <User size={20} />
+                  </div>
+                )}
               </button>
 
               {dropdownOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white border rounded-md shadow-lg z-50">
+                <div className="absolute right-0 mt-2 w-52 bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden">
                   <button
                     onClick={() => { setDropdownOpen(false); router.push('/profile'); }}
-                    className="w-full text-left px-4 py-2 hover:bg-gray-100"
+                    className="w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors text-gray-700 font-medium"
                   >
-                    Profile
+                    👤 Profile
                   </button>
 
                   <button
                     onClick={() => { setDropdownOpen(false); router.push('/dashboard'); }}
-                    className="w-full text-left px-4 py-2 hover:bg-gray-100"
+                    className="w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors text-gray-700 font-medium"
                   >
-                    Dashboard
+                    📊 Dashboard
                   </button>
 
                   <button
-                    onClick={() => { setDropdownOpen(false); handleLogout(); }}
-                    className="w-full text-left px-4 py-2 hover:bg-gray-100 text-red-600"
+                    onClick={() => { setDropdownOpen(false); router.push('/saved-blogs'); }}
+                    className="w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors text-gray-700 font-medium"
                   >
-                    Logout
+                    🔖 Saved Blogs
+                  </button>
+
+                  <div className="border-t border-gray-200"></div>
+
+                  <button
+                    onClick={() => { setDropdownOpen(false); handleLogout(); }}
+                    className="w-full text-left px-4 py-3 hover:bg-red-50 transition-colors text-red-600 font-medium"
+                  >
+                    🚪 Logout
                   </button>
                 </div>
               )}

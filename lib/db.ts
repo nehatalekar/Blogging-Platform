@@ -1,6 +1,4 @@
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import prisma from "./prisma";
 
 export async function createUser(data: {
   email: string;
@@ -24,9 +22,11 @@ export async function createUser(data: {
     });
     return user;
   } catch (error: any) {
-    throw new Error(
-      error.meta?.cause || `Error creating user: ${error.message}`
-    );
+    const message =
+      error.code === "P2002"
+        ? "Email or username already exists"
+        : error.meta?.cause || `Error creating user: ${error.message}`;
+    throw new Error(message);
   }
 }
 

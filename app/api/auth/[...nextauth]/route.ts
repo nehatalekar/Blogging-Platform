@@ -2,9 +2,7 @@ import NextAuth, { type NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { verifyPassword } from "@/lib/auth";
 import { getUserByEmailOrUsername } from "@/lib/db";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import prisma from "@/lib/prisma";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -44,6 +42,8 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           username: user.username,
           name: user.fullName,
+          image: user.profileImage || null,
+          isVerified: user.isVerified,
         };
       },
     }),
@@ -60,6 +60,8 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.username = user.username;
         token.id = user.id?.toString();
+        token.image = user.image;
+        token.isVerified = user.isVerified;
       }
       return token;
     },
@@ -67,18 +69,8 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.username = token.username as string;
         session.user.id = token.id as string;
-        try {
-          if (token.id) {
-            const uid = parseInt(token.id as string, 10);
-            const u = await prisma.user.findUnique({ where: { id: uid } });
-            const profileImage = (u as any)?.profileImage;
-            if (profileImage) {
-              session.user.image = profileImage;
-            }
-          }
-        } catch (e) {
-          // ignore
-        }
+        session.user.image = (token.image as string) || null;
+        session.user.isVerified = (token.isVerified as boolean) || false;
       }
       return session;
     },
