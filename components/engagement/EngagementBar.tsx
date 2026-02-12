@@ -18,6 +18,11 @@ export default function EngagementBar ({
 }: EngagementBarProps) {
   const [displayCommentCount, setDisplayCommentCount] = useState(commentCount);
 
+  // Update displayed count when prop changes (so all users see the correct count)
+  React.useEffect(() => {
+    setDisplayCommentCount(commentCount);
+  }, [commentCount]);
+
   return (
     <div className="flex gap-2 my-8 flex-wrap bg-gray-50 p-4 rounded-lg border border-gray-200">
       <LikeButton blogId={blogId} />

@@ -69,22 +69,22 @@ export default function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 bg-white w-full shadow-md border-b border-gray-200">
-      <nav className="w-full flex justify-between items-center py-3 px-6 max-w-7xl mx-auto">
+      <nav className="w-full flex justify-between items-center py-4 px-6 max-w-7xl mx-auto">
 
         <div className="flex items-center gap-6 flex-1">
           
-          <a href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+          <a href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
               <div className="logo">
-            <Image src="/logo.jpg" alt="Logo"  width={100} height={100}
-            className="rounded-full w-10 h-10 border-2 border-blue-500" />
+            <Image src="/logo.jpg" alt="Logo"  width={120} height={120}
+            className="rounded-full w-11 h-11 " />
           </div>
-          <span className="font-bold text-lg text-gray-900 hidden sm:inline">Blog</span>
+          <span className="font-bold text-xl text-gray-900 hidden sm:inline">Blog Platform</span>
 
           </a>
           
 
-          <div className="hidden sm:block">
-            <form action="/search" method="get" className="relative">
+          {/* <div className="hidden sm:block">
+            <div className="relative">
               <label htmlFor="nav-search" className="sr-only">Search</label>
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
               <input
@@ -93,9 +93,13 @@ export default function Navbar() {
                 type="search"
                 placeholder="Search blogs..."
                 className="w-64 bg-gray-100 placeholder-gray-500 text-gray-800 pl-10 pr-4 py-2.5 rounded-full border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+                onChange={e => {
+                  // Dispatch a custom event for BlogFeed to listen
+                  window.dispatchEvent(new CustomEvent('blog-search', { detail: { search: e.target.value } }));
+                }}
               />
-            </form>
-          </div>
+            </div>
+          </div> */}
 
         </div>
 
@@ -118,7 +122,7 @@ export default function Navbar() {
               <button
                 aria-label="Open profile menu"
                 onClick={() => setDropdownOpen(!dropdownOpen)}
-                className="flex items-center justify-center rounded-full focus:outline-none"
+                className="flex items-center justify-center rounded-full focus:outline-none border border-gray-200 p-1"
               >
                 {profileImage ? (
                   <Image
@@ -126,7 +130,7 @@ export default function Navbar() {
                     alt={(session as any)?.user?.name || 'Profile'}
                     width={1000}
                     height={1000}
-                    className="rounded-full object-cover w-12 h-12"
+                    className="rounded-full object-cover w-12 h-12 p"
                   />
                 ) : (
                   <div className="rounded-full bg-blue-500 text-white w-12 h-12 flex items-center justify-center font-semibold">
