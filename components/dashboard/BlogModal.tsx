@@ -134,21 +134,6 @@ export default function BlogModal({
     onClose();
   };
 
-  const handleUpdate = async () => {
-    setIsSaving(true);
-    const imagePath = await uploadImage();
-    await onUpdate({
-      id: initial?.id,
-      title,
-      description,
-      tag: tag || "General",
-      postImage: imagePath,
-      content,
-      status: initial?.status,
-    });
-    setIsSaving(false);
-    onClose();
-  };
 
   const handleDelete = async () => {
     if (!initial?.id) return;

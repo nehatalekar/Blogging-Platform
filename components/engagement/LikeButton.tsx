@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import { Heart, Bookmark, MessageCircle } from 'lucide-react';
+import { Heart } from 'lucide-react';
+
 
 interface LikeButtonProps {
   blogId: number;
@@ -34,6 +35,7 @@ export default function LikeButton({ blogId, onLikeChange }: LikeButtonProps) {
   };
 
   const handleLike = async () => {
+
     if (!session?.user) {
       alert('Please sign in to like this blog');
       return;

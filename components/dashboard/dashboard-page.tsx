@@ -18,6 +18,7 @@ export default function Dashboard() {
   const [profileImage, setProfileImage] = useState<string | null>(null);
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
+
   const profileRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -30,6 +31,8 @@ export default function Dashboard() {
     fetchPosts();
   }, []);
 
+  console.log("Dropdown open:", dropdownOpen);
+
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
@@ -40,6 +43,8 @@ export default function Dashboard() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+
 
   // Fetch user profile image from API
   useEffect(() => {
@@ -64,6 +69,8 @@ export default function Dashboard() {
     fetchProfileImage();
   }, [session?.user]);
 
+
+
   // Listen for profile updates
   const handleProfileUpdate = useCallback((e: Event) => {
     const detail = (e as CustomEvent).detail as { profileImage?: string | null } | undefined;
@@ -72,10 +79,14 @@ export default function Dashboard() {
     }
   }, []);
 
+
+
   useEffect(() => {
     window.addEventListener('profile-updated', handleProfileUpdate as EventListener);
     return () => window.removeEventListener('profile-updated', handleProfileUpdate as EventListener);
   }, [handleProfileUpdate]);
+
+  // fetch post
 
   const fetchPosts = async () => {
     const res = await fetch("/api/blog");
@@ -83,10 +94,14 @@ export default function Dashboard() {
     setPosts(json.posts || []);
   };
 
-  const handleLogout = async () => {
+  // logout
+
+const handleLogout = async () => {
     await signOut({ redirect: false });
     router.push("/login");
   };
+
+  // save draft
 
   const handleSaveDraft = async (data: any) => {
     if (data.id) {
@@ -107,6 +122,9 @@ export default function Dashboard() {
     await fetchPosts();
   };
 
+
+  // publish post
+
   const handlePublish = async (data: any) => {
     if (data.id) {
       // Update existing blog
@@ -126,6 +144,8 @@ export default function Dashboard() {
     await fetchPosts();
   };
 
+  // update post
+
   const handleUpdate = async (data: any) => {
     await fetch("/api/blog", {
       method: "PUT",
@@ -135,12 +155,15 @@ export default function Dashboard() {
     await fetchPosts();
   };
 
+  // delete post
   const handleDelete = async (id?: number) => {
     if (!id) return;
     await fetch(`/api/blog?id=${id}`, { method: "DELETE" });
     await fetchPosts();
-  };
+  };  
 
+
+  // render
   if (status === "loading") {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-100">
@@ -156,6 +179,8 @@ export default function Dashboard() {
     return null;
   }
 
+
+  // separate drafts and published
   const drafts = posts.filter((p) => (p.status || "published") === "draft");
   const published = posts.filter((p) => (p.status || "published") === "published");
 
@@ -200,6 +225,7 @@ export default function Dashboard() {
                   </div>
                 )}
               </button>
+             
 
               {dropdownOpen && (
                 <div className="absolute right-0 mt-2 w-52 bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden">
