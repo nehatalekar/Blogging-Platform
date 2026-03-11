@@ -1,10 +1,8 @@
 "use client";
 
-import { useSession, signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useRef, useCallback } from "react";
-import Image from "next/image";
-import { User } from "lucide-react";
+import { useEffect, useState } from "react";
 import BlogModal from "./BlogModal";
 import BlogCard from "./BlogCard";
 
@@ -15,11 +13,12 @@ export default function Dashboard() {
   const [posts, setPosts] = useState<any[]>([]);
   const [selectedTab, setSelectedTab] = useState<"drafts" | "published">("drafts");
   const [editingPost, setEditingPost] = useState<any | null>(null);
-  const [profileImage, setProfileImage] = useState<string | null>(null);
 
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-
-  const profileRef = useRef<HTMLDivElement | null>(null);
+  async function fetchPosts() {
+    const res = await fetch("/api/blog");
+    const json = await res.json();
+    setPosts(json.posts || []);
+  }
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -31,75 +30,17 @@ export default function Dashboard() {
     fetchPosts();
   }, []);
 
-  console.log("Dropdown open:", dropdownOpen);
-
   useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
-        setDropdownOpen(false);
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-
-
-  // Fetch user profile image from API
-  useEffect(() => {
-    const fetchProfileImage = async () => {
-      if (!session?.user) {
-        setProfileImage(null);
-        return;
-      }
-
-      try {
-        const res = await fetch('/api/user');
-        if (res.ok) {
-          const data = await res.json();
-          setProfileImage(data.user?.profileImage || null);
-        }
-      } catch (err) {
-        // Fallback to session image if API fails
-        setProfileImage((session as any)?.user?.image || null);
-      }
+    const openModal = () => {
+      setEditingPost(null);
+      setModalOpen(true);
     };
 
-    fetchProfileImage();
-  }, [session?.user]);
-
-
-
-  // Listen for profile updates
-  const handleProfileUpdate = useCallback((e: Event) => {
-    const detail = (e as CustomEvent).detail as { profileImage?: string | null } | undefined;
-    if (detail && typeof detail.profileImage !== 'undefined') {
-      setProfileImage(detail.profileImage || null);
-    }
+    window.addEventListener("open-create-blog-modal", openModal);
+    return () => window.removeEventListener("open-create-blog-modal", openModal);
   }, []);
 
-
-
-  useEffect(() => {
-    window.addEventListener('profile-updated', handleProfileUpdate as EventListener);
-    return () => window.removeEventListener('profile-updated', handleProfileUpdate as EventListener);
-  }, [handleProfileUpdate]);
-
   // fetch post
-
-  const fetchPosts = async () => {
-    const res = await fetch("/api/blog");
-    const json = await res.json();
-    setPosts(json.posts || []);
-  };
-
-  // logout
-
-const handleLogout = async () => {
-    await signOut({ redirect: false });
-    router.push("/login");
-  };
 
   // save draft
 
@@ -145,7 +86,7 @@ const handleLogout = async () => {
   };
 
   // update post
-
+console.log(session);
   const handleUpdate = async (data: any) => {
     await fetch("/api/blog", {
       method: "PUT",
@@ -186,85 +127,6 @@ const handleLogout = async () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <nav className="bg-white shadow-md">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-800">Blog Platform</h1>
-
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => router.push('/')}
-              className="bg-gray-100 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-200 transition"
-            >
-              Home
-            </button>
-
-            <button
-              onClick={() => { setModalOpen(true); setEditingPost(null); }}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition"
-            >
-              Create Blog
-            </button>
-
-            <div className="relative" ref={profileRef}>
-              <button
-                aria-label="Open profile menu"
-                onClick={() => setDropdownOpen(!dropdownOpen)}
-                className="flex items-center justify-center rounded-full focus:outline-none border border-gray-200 p-1"
-              >
-                {profileImage ? (
-                  <Image
-                    src={profileImage}
-                    alt={session.user?.name || 'Profile'}
-                    width={1000}
-                    height={1000}
-                    className="rounded-full object-cover w-12 h-12"
-                  />
-                ) : (
-                  <div className="rounded-full bg-blue-500 text-white w-12 h-12 flex items-center justify-center font-semibold">
-                    <User size={20} />
-                  </div>
-                )}
-              </button>
-             
-
-              {dropdownOpen && (
-                <div className="absolute right-0 mt-2 w-52 bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden">
-                  <button
-                    onClick={() => { setDropdownOpen(false); router.push('/profile'); }}
-                    className="w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors text-gray-700 font-medium"
-                  >
-                    👤 Profile
-                  </button>
-
-                  <button
-                    onClick={() => { setDropdownOpen(false); router.push('/dashboard'); }}
-                    className="w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors text-gray-700 font-medium"
-                  >
-                    📊 Dashboard
-                  </button>
-
-                  <button
-                    onClick={() => { setDropdownOpen(false); router.push('/saved-blogs'); }}
-                    className="w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors text-gray-700 font-medium"
-                  >
-                    🔖 Saved Blogs
-                  </button>
-
-                  <div className="border-t border-gray-200"></div>
-
-                  <button
-                    onClick={() => { setDropdownOpen(false); handleLogout(); }}
-                    className="w-full text-left px-4 py-3 hover:bg-red-50 transition-colors text-red-600 font-medium"
-                  >
-                    🚪 Logout
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </nav>
-
       <main className="max-w-6xl mx-auto px-4 py-12">
         <div className="bg-white rounded-2xl shadow-lg p-10 border border-blue-100 mb-8">
           <h2 className="text-4xl font-bold text-gray-900 mb-2">

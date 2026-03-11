@@ -2,18 +2,21 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Search, Bookmark, User } from "lucide-react";
+import { Bookmark, PenSquare, User } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useCallback } from "react";
 
 
 export default function Navbar() {
   const { data: session } = useSession();
   const router = useRouter();
+  const pathname = usePathname();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const profileRef = useRef<HTMLDivElement | null>(null);
+  const isAuthPage = pathname === "/login" || pathname === "/signup" || pathname === "/verify";
+  const isDashboard = pathname === "/dashboard";
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -67,20 +70,28 @@ export default function Navbar() {
     return () => window.removeEventListener('profile-updated', handleProfileUpdate as EventListener);
   }, [handleProfileUpdate]);
 
+  useEffect(() => {
+    setDropdownOpen(false);
+  }, [pathname]);
+
+  if (isAuthPage) {
+    return null;
+  }
+
   return (
     <header className="sticky top-0 z-50 bg-white w-full shadow-md border-b border-gray-200">
       <nav className="w-full flex justify-between items-center py-4 px-6 max-w-7xl mx-auto">
 
         <div className="flex items-center gap-6 flex-1">
           
-          <a href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+          <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
               <div className="logo">
             <Image src="/logo.jpg" alt="Logo"  width={120} height={120}
             className="rounded-full w-11 h-11 " />
           </div>
           <span className="font-bold text-xl text-gray-900 hidden sm:inline">Blog Platform</span>
 
-          </a>
+          </Link>
           
 
           {/* <div className="hidden sm:block">
@@ -110,6 +121,15 @@ export default function Navbar() {
         <div className="flex items-center justify-center gap-3">
           {session?.user ? (
             <>
+              {isDashboard && (
+                <button
+                  onClick={() => window.dispatchEvent(new CustomEvent("open-create-blog-modal"))}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-all font-medium text-sm"
+                >
+                  <PenSquare size={16} />
+                  <span className="hidden sm:inline">Create Blog</span>
+                </button>
+              )}
               <Link
                 href="/saved-blogs"
                 className="flex items-center gap-2 px-4 py-2.5 rounded-full text-gray-700 bg-gray-100 hover:bg-gray-200 transition-all font-medium text-sm"
