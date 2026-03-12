@@ -5,12 +5,13 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import BlogModal from "./BlogModal";
 import BlogCard from "./BlogCard";
+import { BlogData } from "@/types/blog";
 
 export default function Dashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [modalOpen, setModalOpen] = useState(false);
-  const [posts, setPosts] = useState<any[]>([]);
+  const [posts, setPosts] = useState<BlogData[]>([]);
   const [selectedTab, setSelectedTab] = useState<"drafts" | "published">("drafts");
   const [editingPost, setEditingPost] = useState<any | null>(null);
 
@@ -44,7 +45,7 @@ export default function Dashboard() {
 
   // save draft
 
-  const handleSaveDraft = async (data: any) => {
+  const handleSaveDraft = async (data: BlogData) => {
     if (data.id) {
       // Update existing draft
       await fetch("/api/blog", {
@@ -66,7 +67,7 @@ export default function Dashboard() {
 
   // publish post
 
-  const handlePublish = async (data: any) => {
+  const handlePublish = async (data: BlogData) => {
     if (data.id) {
       // Update existing blog
       await fetch("/api/blog", {
@@ -171,7 +172,7 @@ console.log(session);
             {(selectedTab === "drafts" ? drafts : published).length > 0 ? (
               (selectedTab === "drafts" ? drafts : published).map((p) => (
                 <div key={p.id} className="w-full h-full">
-                  <BlogCard post={p} onEdit={(post: any) => { setEditingPost(post); setModalOpen(true); }} onDelete={async (id: number) => { await handleDelete(id); }} />
+                  <BlogCard post={p} onEdit={(post) => { setEditingPost(post); setModalOpen(true); }} onDelete={async (id) => { await handleDelete(id); }} />
                 </div>
               ))
             ) : (

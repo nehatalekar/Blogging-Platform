@@ -6,21 +6,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { Trash2, ArrowRight, ArrowLeft } from "lucide-react";
-
-interface SavedBlog {
-  id: number;
-  blogId: number;
-  blog: {
-    id: number;
-    title: string;
-    slug: string;
-    description: string;
-    postImage?: string;
-    author: string;
-    tag: string;
-    createdAt: string;
-  };
-}
+import { SavedBlog } from "@/types/blog";
 
 export default function SavedBlogsPage() {
   const { data: session } = useSession();

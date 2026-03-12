@@ -2,18 +2,7 @@
 
 import { useEffect, useState } from "react";
 import RichTextEditor from "./RichTextEditor";
-
-type BlogData = {
-  id?: number;
-  title?: string;
-  description?: string;
-  postImage?: string;
-  slug?: string;
-  content?: string;
-  status?: string;
-  tag?: string;
-  author?: string;
-};
+import { BlogData } from "@/types/blog";
 
 export default function BlogModal({
   open,

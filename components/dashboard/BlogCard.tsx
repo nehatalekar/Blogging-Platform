@@ -1,6 +1,14 @@
 "use client";
 
-export default function BlogCard({ post, onEdit, onDelete }: any) {
+import { BlogData } from "@/types/blog";
+
+interface BlogCardProps {
+  post: BlogData;
+  onEdit: (post: BlogData) => void;
+  onDelete: (id?: number) => void;
+}
+
+export default function BlogCard({ post, onEdit, onDelete }: BlogCardProps) {
   return (
     <div className="border p-4 rounded-md bg-white shadow-sm h-full flex flex-col justify-between">
       <div>

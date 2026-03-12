@@ -2,10 +2,11 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useSession } from "next-auth/react";
+import { UserProfile } from "@/types/user";
 
 export default function ProfilePage() {
   const { data: session, status } = useSession();
-  const [user, setUser] = useState<any | null>(null);
+  const [user, setUser] = useState<UserProfile | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [fullNameInput, setFullNameInput] = useState("");
   const [uploading, setUploading] = useState(false);

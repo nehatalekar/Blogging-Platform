@@ -3,18 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { MessageCircle, Trash2 } from 'lucide-react';
-
-interface Comment {
-  id: number;
-  content: string;
-  user: {
-    id: number;
-    username: string;
-    fullName: string;
-    profileImage?: string;
-  };
-  createdAt: string;
-}
+import { Comment } from '@/types/comment';
 
 interface CommentsSectionProps {
   blogId: number;
@@ -32,8 +21,8 @@ export default function CommentsSection({ blogId, onCommentCountChange }: Commen
   useEffect(() => {
     fetchComments();
     // Optionally, poll for new comments every 30s
-    // const interval = setInterval(fetchComments, 30000);
-    // return () => clearInterval(interval);
+    const interval = setInterval(fetchComments, 30000);
+    return () => clearInterval(interval);
   }, [blogId]);
 
   const fetchComments = async () => {

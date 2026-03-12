@@ -50,23 +50,23 @@ export async function POST(req: Request) {
 }
 
 export async function GET(req: Request) {
-  try {
-    const { searchParams } = new URL(req.url);
-    const blogId = searchParams.get("blogId");
+  const { searchParams } = new URL(req.url);
+  const blogId = parseInt(searchParams.get("blogId") || "0", 10);
+  const token = await getToken({ req: req as any });
+  const count = await prisma.like.count({ where: { blogId } });
 
-    if (!blogId) {
-      return NextResponse.json({ error: "Blog ID required" }, { status: 400 });
-    }
-
-    const likes = await prisma.like.findMany({
-      where: { blogId: parseInt(blogId) },
-      include: { user: { select: { id: true, username: true, profileImage: true } } },
+  let likedByMe = false;
+  if (token?.id) {
+    const existingLike = await prisma.like.findUnique({
+      where: {
+        userId_blogId: {
+          userId: parseInt(token.id as string, 10),
+          blogId,
+        },
+      },
     });
-
-    const count = likes.length;
-
-    return NextResponse.json({ count, likes });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    likedByMe = !!existingLike;
   }
+
+  return NextResponse.json({ count, likedByMe });
 }

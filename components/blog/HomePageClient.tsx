@@ -4,17 +4,7 @@ import { useState, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
-
-interface BlogPost {
-  title: string;
-  slug: string;
-  postImage: string;
-  description: string;
-  profileImage: string;
-  author: string;
-  date: string;
-  tag: string;
-}
+import { BlogPost } from "@/types/blog";
 
 interface HomePageClientProps {
   initialPosts: BlogPost[];
