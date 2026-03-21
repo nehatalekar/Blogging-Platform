@@ -24,6 +24,28 @@ export interface BlogData {
   updatedAt?: string;
 }
 
+export interface BlogCreateInput {
+  title?: string;
+  description?: string;
+  postImage?: string;
+  slug?: string;
+  content?: string;
+  status?: string;
+  tag?: string;
+}
+
+export interface BlogUpdateInput {
+  id: number;
+  title?: string;
+  description?: string;
+  postImage?: string | null;
+  content?: string;
+  status?: string;
+  tag?: string;
+}
+
+export type BlogMutationInput = BlogCreateInput | BlogUpdateInput;
+
 // Used for saved blogs list
 export interface SavedBlog {
   id: number;

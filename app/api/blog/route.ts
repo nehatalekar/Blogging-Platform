@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 import prisma from "@/lib/prisma";
+import { sanitizeInput, validateBlogContent, validateBlogTitle } from "@/lib/validation";
 
 function slugify(text: string) {
   return text
@@ -10,6 +11,108 @@ function slugify(text: string) {
     .replace(/\s+/g, "-")
     .replace(/[^a-z0-9\-]/g, "")
     .replace(/\-+/g, "-");
+}
+
+const BLOG_STATUSES = new Set(["draft", "published"]);
+
+type BlogUpdateBody = {
+  id?: number;
+  title?: string;
+  description?: string;
+  content?: string;
+  tag?: string;
+  status?: string;
+  postImage?: string | null;
+};
+
+async function updateBlog(req: Request) {
+  const token = await getToken({ req: req as any, secret: process.env.NEXTAUTH_SECRET });
+
+  if (!token || !token.id) {
+    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  }
+
+  const userId = parseInt(token.id as string, 10);
+  const body = (await req.json()) as BlogUpdateBody;
+  const { id } = body;
+
+  if (!id) {
+    return NextResponse.json({ error: "Blog ID required" }, { status: 400 });
+  }
+
+  const blog = await prisma.blog.findUnique({ where: { id } });
+  if (!blog || blog.userId !== userId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
+
+  const updateData: {
+    title?: string;
+    description?: string;
+    content?: string;
+    tag?: string;
+    status?: string;
+    postImage?: string | null;
+  } = {};
+
+  if ("title" in body) {
+    if (typeof body.title !== "string" || !validateBlogTitle(body.title)) {
+      return NextResponse.json({ error: "Invalid blog title" }, { status: 400 });
+    }
+
+    updateData.title = sanitizeInput(body.title).slice(0, 255);
+  }
+
+  if ("description" in body) {
+    if (typeof body.description !== "string") {
+      return NextResponse.json({ error: "Invalid blog description" }, { status: 400 });
+    }
+
+    updateData.description = sanitizeInput(body.description);
+  }
+
+  if ("content" in body) {
+    if (typeof body.content !== "string" || !validateBlogContent(body.content)) {
+      return NextResponse.json({ error: "Invalid blog content" }, { status: 400 });
+    }
+
+    updateData.content = body.content;
+  }
+
+  if ("tag" in body) {
+    if (typeof body.tag !== "string") {
+      return NextResponse.json({ error: "Invalid blog tag" }, { status: 400 });
+    }
+
+    const nextTag = sanitizeInput(body.tag);
+    updateData.tag = nextTag || "General";
+  }
+
+  if ("status" in body) {
+    if (typeof body.status !== "string" || !BLOG_STATUSES.has(body.status)) {
+      return NextResponse.json({ error: "Invalid blog status" }, { status: 400 });
+    }
+
+    updateData.status = body.status;
+  }
+
+  if ("postImage" in body) {
+    if (body.postImage !== null && typeof body.postImage !== "string") {
+      return NextResponse.json({ error: "Invalid blog image" }, { status: 400 });
+    }
+
+    updateData.postImage = body.postImage && body.postImage.trim() ? body.postImage : null;
+  }
+
+  if (Object.keys(updateData).length === 0) {
+    return NextResponse.json({ error: "No fields provided for update" }, { status: 400 });
+  }
+
+  const updated = await prisma.blog.update({
+    where: { id },
+    data: updateData,
+  });
+
+  return NextResponse.json({ ok: true, blog: updated });
 }
 
 export async function GET(req: Request) {
@@ -87,39 +190,15 @@ export async function POST(req: Request) {
 
 export async function PUT(req: Request) {
   try {
-    const token = await getToken({ req: req as any, secret: process.env.NEXTAUTH_SECRET });
+    return await updateBlog(req);
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
 
-    if (!token || !token.id) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
-
-    const userId = parseInt(token.id as string, 10);
-    const body = await req.json();
-    const { id, slug, title = "Untitled", description = "", postImage = "", content = "", status = "published", tag = "General" } = body;
-
-    if (!id) return NextResponse.json({ error: "Blog ID required" }, { status: 400 });
-
-    // Verify blog belongs to user
-    const blog = await prisma.blog.findUnique({ where: { id } });
-    if (!blog || blog.userId !== userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-    }
-
-    const updated = await prisma.blog.update({
-      where: { id },
-      data: {
-        title,
-        slug: slug || blog.slug,
-        description,
-        content,
-        postImage: postImage || blog.postImage,
-        profileImage: body.profileImage || blog.profileImage,
-        tag,
-        status,
-      },
-    });
-
-    return NextResponse.json({ ok: true, blog: updated });
+export async function PATCH(req: Request) {
+  try {
+    return await updateBlog(req);
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

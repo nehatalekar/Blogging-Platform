@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import BlogModal from "./BlogModal";
 import BlogCard from "./BlogCard";
-import { BlogData } from "@/types/blog";
+import { BlogCreateInput, BlogData, BlogUpdateInput } from "@/types/blog";
 
 export default function Dashboard() {
   const { data: session, status } = useSession();
@@ -13,7 +13,7 @@ export default function Dashboard() {
   const [modalOpen, setModalOpen] = useState(false);
   const [posts, setPosts] = useState<BlogData[]>([]);
   const [selectedTab, setSelectedTab] = useState<"drafts" | "published">("drafts");
-  const [editingPost, setEditingPost] = useState<any | null>(null);
+  const [editingPost, setEditingPost] = useState<BlogData | null>(null);
 
   async function fetchPosts() {
     const res = await fetch("/api/blog");
@@ -45,52 +45,31 @@ export default function Dashboard() {
 
   // save draft
 
-  const handleSaveDraft = async (data: BlogData) => {
-    if (data.id) {
-      // Update existing draft
-      await fetch("/api/blog", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, status: "draft" }),
-      });
-    } else {
-      // Create new draft
-      await fetch("/api/blog", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, status: "draft" }),
-      });
-    }
+  const handleSaveDraft = async (data: BlogCreateInput) => {
+    await fetch("/api/blog", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...data, status: "draft" }),
+    });
     await fetchPosts();
   };
 
 
   // publish post
 
-  const handlePublish = async (data: BlogData) => {
-    if (data.id) {
-      // Update existing blog
-      await fetch("/api/blog", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, status: "published" }),
-      });
-    } else {
-      // Create new blog
-      await fetch("/api/blog", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, status: "published" }),
-      });
-    }
+  const handlePublish = async (data: BlogCreateInput) => {
+    await fetch("/api/blog", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...data, status: "published" }),
+    });
     await fetchPosts();
   };
 
   // update post
-console.log(session);
-  const handleUpdate = async (data: any) => {
+  const handleUpdate = async (data: BlogUpdateInput) => {
     await fetch("/api/blog", {
-      method: "PUT",
+      method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
@@ -193,7 +172,7 @@ console.log(session);
         onPublish={handlePublish}
         onDelete={async (id?: number) => await handleDelete(id)}
         onUpdate={handleUpdate}
-        initial={editingPost}
+        initial={editingPost ?? undefined}
       />
     </div>
   );

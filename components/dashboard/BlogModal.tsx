@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import RichTextEditor from "./RichTextEditor";
-import { BlogData } from "@/types/blog";
+import { BlogCreateInput, BlogData, BlogUpdateInput } from "@/types/blog";
 
 export default function BlogModal({
   open,
@@ -15,10 +15,10 @@ export default function BlogModal({
 }: {
   open: boolean;
   onClose: () => void;
-  onSaveDraft: (data: BlogData) => Promise<void>;
-  onPublish: (data: BlogData) => Promise<void>;
+  onSaveDraft: (data: BlogCreateInput) => Promise<void>;
+  onPublish: (data: BlogCreateInput) => Promise<void>;
   onDelete: (id?: number) => Promise<void>;
-  onUpdate: (data: BlogData) => Promise<void>;
+  onUpdate: (data: BlogUpdateInput) => Promise<void>;
   initial?: BlogData;
 }) {
   const [title, setTitle] = useState("");
@@ -102,49 +102,98 @@ export default function BlogModal({
     return json.path as string | undefined;
   };
 
+  const buildUpdatePayload = async (nextStatus: "draft" | "published") => {
+    if (!initial?.id) {
+      return null;
+    }
+
+    const payload: BlogUpdateInput = { id: initial.id };
+    const nextTitle = title.trim();
+    const currentTitle = initial.title?.trim() || "";
+    const currentDescription = initial.description || "";
+    const nextTag = (tag || "General").trim() || "General";
+    const currentTag = (initial.tag || "General").trim() || "General";
+    const currentContent = initial.content || "";
+    const currentStatus = initial.status || "published";
+
+    if (nextTitle !== currentTitle) {
+      payload.title = nextTitle;
+    }
+
+    if (description !== currentDescription) {
+      payload.description = description;
+    }
+
+    if (nextTag !== currentTag) {
+      payload.tag = nextTag;
+    }
+
+    if (content !== currentContent) {
+      payload.content = content;
+    }
+
+    const imagePath = await uploadImage();
+    if (imagePath !== undefined) {
+      payload.postImage = imagePath;
+    }
+
+    if (nextStatus !== currentStatus) {
+      payload.status = nextStatus;
+    }
+
+    return payload;
+  };
+
   const handleSaveDraft = async () => {
     setIsSaving(true);
-    const imagePath = await uploadImage();
-    if (initial?.id) {
-      // Update existing draft
-      await onUpdate({
-        id: initial.id,
-        title,
-        description,
-        tag: tag || "General",
-        postImage: imagePath,
-        content,
-        status: initial?.status,
-      });
-    } else {
-      // Create new draft
-      await onSaveDraft({
-        title,
-        description,
-        tag: tag || "General",
-        postImage: imagePath,
-        content,
-        slug: initial?.slug,
-      });
+    try {
+      if (initial?.id) {
+        const payload = await buildUpdatePayload("draft");
+        if (payload && Object.keys(payload).length > 1) {
+          await onUpdate(payload);
+        }
+      } else {
+        const imagePath = await uploadImage();
+        await onSaveDraft({
+          title: title.trim(),
+          description,
+          tag: (tag || "General").trim() || "General",
+          postImage: imagePath,
+          content,
+          slug: initial?.slug,
+        });
+      }
+
+      onClose();
+    } finally {
+      setIsSaving(false);
     }
-    setIsSaving(false);
-    onClose();
   };
 
   const handlePublish = async () => {
     setIsSaving(true);
-    const imagePath = await uploadImage();
-    await onPublish({
-      id: initial?.id,
-      title,
-      description,
-      tag: tag || "General",
-      postImage: imagePath,
-      content,
-      status: "published",
-    });
-    setIsSaving(false);
-    onClose();
+    try {
+      if (initial?.id) {
+        const payload = await buildUpdatePayload("published");
+        if (payload && Object.keys(payload).length > 1) {
+          await onUpdate(payload);
+        }
+      } else {
+        const imagePath = await uploadImage();
+        await onPublish({
+          title: title.trim(),
+          description,
+          tag: (tag || "General").trim() || "General",
+          postImage: imagePath,
+          content,
+          status: "published",
+        });
+      }
+
+      onClose();
+    } finally {
+      setIsSaving(false);
+    }
   };
 
 
