@@ -2,15 +2,17 @@ import React from "react";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { PrismaClient } from "@prisma/client";
 import { ArrowLeft } from "lucide-react";
 import BlogContent from "./BlogContent";
+import prisma from "@/lib/prisma";
 
 type Props = {
   params: { slug: string };
 };
 
-const prisma = new PrismaClient();
+function normalizeImagePath(imagePath: string) {
+  return imagePath.startsWith("http") ? imagePath : `/${imagePath.replace(/^\/+/, "")}`;
+}
 
 export default async function PostPage({ params }: Props) {
   const { slug } = await params; // Ensure params is awaited
@@ -61,7 +63,7 @@ export default async function PostPage({ params }: Props) {
           {image && (
             <div className="mt-8 rounded-xl overflow-hidden shadow-lg">
               <Image
-                src={`/${image}`}
+                src={normalizeImagePath(image)}
                 alt={title}
                 width={900}
                 height={400}

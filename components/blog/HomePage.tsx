@@ -1,8 +1,6 @@
-import { PrismaClient } from "@prisma/client";
 import HomePageClient from "./HomePageClient";
 import { BlogPost } from "@/types/blog";
-
-const prisma = new PrismaClient();
+import prisma from "@/lib/prisma";
 
 async function getPublishedBlogs(): Promise<BlogPost[]> {
   try {

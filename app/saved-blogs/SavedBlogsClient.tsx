@@ -8,6 +8,10 @@ import Image from "next/image";
 import { Trash2, ArrowRight, ArrowLeft } from "lucide-react";
 import { SavedBlog } from "@/types/blog";
 
+function normalizeImagePath(imagePath: string) {
+  return imagePath.startsWith("http") ? imagePath : `/${imagePath.replace(/^\/+/, "")}`;
+}
+
 export default function SavedBlogsPage() {
   const { data: session } = useSession();
   const router = useRouter();
@@ -143,7 +147,7 @@ export default function SavedBlogsPage() {
                     {blog.postImage && (
                       <div className="md:w-48 h-48 flex-shrink-0 relative bg-gray-100">
                         <Image
-                          src={`/${blog.postImage}`}
+                          src={normalizeImagePath(blog.postImage)}
                           alt={blog.title}
                           fill
                           className="object-cover"

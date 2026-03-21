@@ -4,9 +4,11 @@
 
 ### Prerequisites
 - Node.js 20.x or higher
-- PostgreSQL/SQLite database (or use Vercel Postgres)
+- Network database (Vercel Postgres, Neon, Supabase, etc.)
 - SMTP service for email (Brevo, SendGrid, etc.)
 - Vercel account
+
+> Important: SQLite (`file:...`) is not supported for Vercel production in this project.
 
 ### Environment Variables Setup
 
@@ -25,6 +27,8 @@ SMTP_PORT=             # Email service SMTP port
 EMAIL_USER=            # Email service username
 EMAIL_PASSWORD=        # Email service password
 EMAIL_FROM=            # Sender email address
+BLOB_READ_WRITE_TOKEN= # Vercel Blob token for production uploads
+OPENAI_API_KEY=        # Optional (only for AI draft features)
 ```
 
 ### Local Testing Before Deployment
@@ -65,11 +69,8 @@ vercel --prod
 ### Post-Deployment Setup
 
 1. **Database Migration**
-   - Vercel automatically runs migrations if using Vercel Postgres
-   - For external databases, run migrations manually:
-   ```bash
-   npx prisma migrate deploy
-   ```
+   - This project runs `prisma db push` during Vercel build.
+   - Ensure `DATABASE_URL` is configured in Vercel before the first deploy.
 
 2. **Verify Services**
    - Test user registration and email verification
@@ -104,8 +105,13 @@ The application is configured with:
 
 **Database Errors**
 - Ensure DATABASE_URL is accessible from Vercel
+- Confirm DATABASE_URL is not SQLite (`file:...`)
 - Run migrations manually if needed
 - Check database connection limits
+
+**Upload Errors in Production**
+- Set `BLOB_READ_WRITE_TOKEN` in Vercel environment variables
+- Redeploy after adding the token
 
 ### Security Checklist
 

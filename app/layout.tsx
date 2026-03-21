@@ -4,6 +4,7 @@ import "./globals.css";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Providers } from "@/components/providers/SessionProvider";
+import { validateEnv } from "@/lib/env";
 
 const inter = Inter({ subsets: ["latin"], display: "swap" });
 
@@ -17,6 +18,8 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  validateEnv();
+
   return (
     <html lang="en">
       <body className={`${inter.className} antialiased`}>
