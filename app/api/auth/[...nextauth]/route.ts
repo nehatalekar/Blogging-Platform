@@ -3,6 +3,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { verifyPassword } from "@/lib/auth";
 import { getUserByEmailOrUsername } from "@/lib/db";
 import prisma from "@/lib/prisma";
+import { normalizeImageSrc } from "@/lib/utils";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -42,7 +43,7 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           username: user.username,
           name: user.fullName,
-          image: user.profileImage || null,
+          image: normalizeImageSrc(user.profileImage, "") || null,
           isVerified: user.isVerified,
         };
       },
@@ -60,7 +61,7 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.username = user.username;
         token.id = user.id?.toString();
-        token.image = user.image;
+        token.image = normalizeImageSrc(user.image as string | null | undefined, "") || null;
         token.isVerified = user.isVerified;
       }
       return token;
@@ -69,7 +70,7 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.username = token.username as string;
         session.user.id = token.id as string;
-        session.user.image = (token.image as string) || null;
+        session.user.image = normalizeImageSrc(token.image as string | null | undefined, "") || null;
         session.user.isVerified = (token.isVerified as boolean) || false;
       }
       return session;

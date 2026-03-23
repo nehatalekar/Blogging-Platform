@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 import prisma from "@/lib/prisma";
+import { normalizeImageSrc } from "@/lib/utils";
+
+function normalizeProfileImageValue(profileImage?: string | null) {
+  const normalizedProfileImage = normalizeImageSrc(profileImage, "");
+  return normalizedProfileImage || null;
+}
 
 export async function GET(req: Request) {
   const token = await getToken({ req: req as any, secret: process.env.NEXTAUTH_SECRET });
@@ -28,7 +34,21 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
-  return NextResponse.json({ user });
+  const normalizedProfileImage = normalizeProfileImageValue(user.profileImage);
+
+  if (normalizedProfileImage !== (user.profileImage ?? null)) {
+    await prisma.user.update({
+      where: { id },
+      data: { profileImage: normalizedProfileImage },
+    });
+  }
+
+  return NextResponse.json({
+    user: {
+      ...user,
+      profileImage: normalizedProfileImage,
+    },
+  });
 }
 
 export async function PUT(req: Request) {
@@ -44,11 +64,11 @@ export async function PUT(req: Request) {
 
   const data: any = {};
   if (typeof fullName === 'string') data.fullName = fullName;
-  if (typeof profileImage === 'string') data.profileImage = profileImage;
+  if (typeof profileImage === 'string') data.profileImage = normalizeProfileImageValue(profileImage);
 
   try {
     const updated = await prisma.user.update({ where: { id }, data });
-    const profileImage = (updated as any).profileImage ?? null;
+    const profileImage = normalizeProfileImageValue((updated as any).profileImage);
     return NextResponse.json({ ok: true, user: { id: updated.id, email: updated.email, username: updated.username, fullName: updated.fullName, profileImage, isVerified: updated.isVerified } });
   } catch (err) {
     return NextResponse.json({ error: 'Update failed' }, { status: 500 });
