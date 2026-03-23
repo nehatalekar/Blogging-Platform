@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { MessageCircle, Trash2 } from 'lucide-react';
 import { Comment } from '@/types/comment';
+import { normalizeImageSrc } from '@/lib/utils';
 
 interface CommentsSectionProps {
   blogId: number;
@@ -163,8 +164,8 @@ export default function CommentsSection({ blogId, onCommentCountChange }: Commen
             <div key={comment.id} className="bg-white p-5 rounded-lg border border-gray-200 hover:shadow-md transition-all">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">
-                  {comment.user.profileImage ? (
-                    <img src={comment.user.profileImage} alt={comment.user.fullName} className="w-10 h-10 rounded-full object-cover border" />
+                  {normalizeImageSrc(comment.user.profileImage, "") ? (
+                    <img src={normalizeImageSrc(comment.user.profileImage, "")} alt={comment.user.fullName} className="w-10 h-10 rounded-full object-cover border" />
                   ) : (
                     <div className="w-10 h-10 rounded-full bg-blue-500 text-white flex items-center justify-center font-semibold text-sm">
                       {comment.user.fullName.charAt(0).toUpperCase()}

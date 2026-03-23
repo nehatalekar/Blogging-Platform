@@ -6,7 +6,7 @@ import { Bookmark, PenSquare, User } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useCallback } from "react";
-import { isRemoteImageSrc, normalizeImageSrc } from "@/lib/utils";
+import { normalizeImageSrc } from "@/lib/utils";
 
 
 export default function Navbar() {
@@ -146,13 +146,10 @@ export default function Navbar() {
                 className="flex items-center justify-center rounded-full focus:outline-none border border-gray-200 p-1"
               >
                 {profileImage ? (
-                  <Image
+                  <img
                     src={profileImage}
                     alt={(session as any)?.user?.name || 'Profile'}
-                    width={1000}
-                    height={1000}
-                    unoptimized={isRemoteImageSrc(profileImage)}
-                    className="rounded-full object-cover w-12 h-12 p"
+                    className="rounded-full object-cover w-12 h-12"
                   />
                 ) : (
                   <div className="rounded-full bg-blue-500 text-white w-12 h-12 flex items-center justify-center font-semibold">

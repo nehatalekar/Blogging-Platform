@@ -7,6 +7,7 @@
     "vercel-build": "prisma generate && prisma db push && next build",
     "start": "next start",
     "lint": "eslint",
+    "repair:image-paths": "node scripts/repair-image-paths.js",
     "postinstall": "prisma generate"
   },
   "dependencies": {

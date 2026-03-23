@@ -1,6 +1,7 @@
 import HomePageClient from "./HomePageClient";
 import { BlogPost } from "@/types/blog";
 import prisma from "@/lib/prisma";
+import { normalizeImageSrc } from "@/lib/utils";
 
 async function getPublishedBlogs(): Promise<BlogPost[]> {
   try {
@@ -13,9 +14,9 @@ async function getPublishedBlogs(): Promise<BlogPost[]> {
     return blogs.map((blog) => ({
       title: blog.title,
       slug: blog.slug,
-      postImage: blog.postImage || "/default-post.jpg",
+      postImage: normalizeImageSrc(blog.postImage, "/default-post.jpg"),
       description: blog.description,
-      profileImage: blog.user?.profileImage || "/profile.webp",
+      profileImage: normalizeImageSrc(blog.user?.profileImage, "/profile.webp"),
       author: blog.user?.fullName || blog.author || "Author",
       date: blog.createdAt?.toLocaleDateString("en-US", {
         year: "numeric",

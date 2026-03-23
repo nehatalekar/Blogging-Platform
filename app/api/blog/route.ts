@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 import prisma from "@/lib/prisma";
 import { sanitizeInput, validateBlogContent, validateBlogTitle } from "@/lib/validation";
+import { normalizeImageSrc } from "@/lib/utils";
 
 function slugify(text: string) {
   return text
@@ -14,6 +15,11 @@ function slugify(text: string) {
 }
 
 const BLOG_STATUSES = new Set(["draft", "published"]);
+
+function normalizeStoredImageValue(imagePath?: string | null) {
+  const normalizedImagePath = normalizeImageSrc(imagePath, "");
+  return normalizedImagePath || null;
+}
 
 type BlogUpdateBody = {
   id?: number;
@@ -100,7 +106,7 @@ async function updateBlog(req: Request) {
       return NextResponse.json({ error: "Invalid blog image" }, { status: 400 });
     }
 
-    updateData.postImage = body.postImage && body.postImage.trim() ? body.postImage : null;
+    updateData.postImage = normalizeStoredImageValue(body.postImage);
   }
 
   if (Object.keys(updateData).length === 0) {
@@ -112,7 +118,14 @@ async function updateBlog(req: Request) {
     data: updateData,
   });
 
-  return NextResponse.json({ ok: true, blog: updated });
+  return NextResponse.json({
+    ok: true,
+    blog: {
+      ...updated,
+      postImage: normalizeStoredImageValue(updated.postImage),
+      profileImage: normalizeStoredImageValue(updated.profileImage),
+    },
+  });
 }
 
 export async function GET(req: Request) {
@@ -131,7 +144,13 @@ export async function GET(req: Request) {
       orderBy: { createdAt: "desc" },
     });
 
-    return NextResponse.json({ posts: blogs });
+    return NextResponse.json({
+      posts: blogs.map((blog) => ({
+        ...blog,
+        postImage: normalizeStoredImageValue(blog.postImage),
+        profileImage: normalizeStoredImageValue(blog.profileImage),
+      })),
+    });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
@@ -174,8 +193,8 @@ export async function POST(req: Request) {
         description,
         content,
         author: body.author || user.fullName || "Admin",
-        postImage: postImage || null,
-        profileImage: body.profileImage || user.profileImage || null,
+        postImage: normalizeStoredImageValue(postImage),
+        profileImage: normalizeStoredImageValue(body.profileImage || user.profileImage || null),
         tag,
         status,
         userId,

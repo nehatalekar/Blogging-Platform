@@ -1,6 +1,23 @@
 import { NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 import prisma from "@/lib/prisma";
+import { normalizeImageSrc } from "@/lib/utils";
+
+type CommentWithUserProfile = {
+  user: {
+    profileImage?: string | null;
+  };
+};
+
+function normalizeCommentUserImage<T extends CommentWithUserProfile>(comment: T): T {
+  return {
+    ...comment,
+    user: {
+      ...comment.user,
+      profileImage: normalizeImageSrc(comment.user.profileImage, "") || null,
+    },
+  };
+}
 
 export async function POST(req: Request) {
   try {
@@ -42,7 +59,7 @@ export async function POST(req: Request) {
       },
     });
 
-    return NextResponse.json({ ok: true, comment });
+    return NextResponse.json({ ok: true, comment: normalizeCommentUserImage(comment) });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
@@ -65,7 +82,7 @@ export async function GET(req: Request) {
       orderBy: { createdAt: "desc" },
     });
 
-    return NextResponse.json({ count: comments.length, comments });
+    return NextResponse.json({ count: comments.length, comments: comments.map(normalizeCommentUserImage) });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
