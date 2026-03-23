@@ -3,10 +3,7 @@
 import { useEffect, useState } from "react";
 import RichTextEditor from "./RichTextEditor";
 import { BlogCreateInput, BlogData, BlogUpdateInput } from "@/types/blog";
-
-function normalizeImagePath(imagePath: string) {
-  return imagePath.startsWith("http") ? imagePath : `/${imagePath.replace(/^\/+/, "")}`;
-}
+import { normalizeImageSrc } from "@/lib/utils";
 
 export default function BlogModal({
   open,
@@ -41,7 +38,7 @@ export default function BlogModal({
       setTitle(initial.title || "");
       setDescription(initial.description || "");
       setTag(initial.tag || "");
-      setImagePreview(initial.postImage ? normalizeImagePath(initial.postImage) : null);
+      setImagePreview(initial.postImage ? normalizeImageSrc(initial.postImage) : null);
       setContent(initial.content || "");
     }
     if (!open) {

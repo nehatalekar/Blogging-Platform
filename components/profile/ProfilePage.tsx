@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { UserProfile } from "@/types/user";
+import { normalizeImageSrc } from "@/lib/utils";
 
 export default function ProfilePage() {
   const { data: session, status } = useSession();
@@ -20,9 +21,10 @@ export default function ProfilePage() {
         const res = await fetch('/api/user');
         if (res.ok) {
           const json = await res.json();
-          setUser(json.user);
+          const normalizedProfileImage = normalizeImageSrc(json.user.profileImage, "");
+          setUser({ ...json.user, profileImage: normalizedProfileImage || null });
           setFullNameInput(json.user.fullName || "");
-          setSelectedImagePath(json.user.profileImage || null);
+          setSelectedImagePath(normalizedProfileImage || null);
         }
       } catch (err) {
         // ignore for now
@@ -62,7 +64,7 @@ export default function ProfilePage() {
       });
 
       if (p) {
-        const imagePath = '/' + p.replace(/^\//, '');
+        const imagePath = normalizeImageSrc(p);
         setSelectedImagePath(imagePath);
         await saveProfileImage(imagePath);
       }
@@ -84,9 +86,10 @@ export default function ProfilePage() {
       });
       if (res.ok) {
         const j = await res.json();
-        setUser(j.user || user);
+        const normalizedProfileImage = normalizeImageSrc(j.user?.profileImage, "");
+        setUser(j.user ? { ...j.user, profileImage: normalizedProfileImage || null } : user);
         try {
-          const newImg = (j.user && j.user.profileImage) || null;
+          const newImg = normalizedProfileImage || null;
           window.dispatchEvent(new CustomEvent('profile-updated', { detail: { profileImage: newImg } }));
         } catch (e) {
           // ignore
@@ -108,12 +111,13 @@ export default function ProfilePage() {
       });
       if (res.ok) {
         const j = await res.json();
-        setUser(j.user || user);
+        const normalizedProfileImage = normalizeImageSrc(j.user?.profileImage, "");
+        setUser(j.user ? { ...j.user, profileImage: normalizedProfileImage || null } : user);
         setIsEditing(false);
         setIsEditingFullName(false);
         // notify other parts of the app (e.g., Navbar) about updated profile image
         try {
-          const newImg = (j.user && j.user.profileImage) || null;
+          const newImg = normalizedProfileImage || null;
           window.dispatchEvent(new CustomEvent('profile-updated', { detail: { profileImage: newImg } }));
         } catch (e) {
           // ignore
@@ -145,8 +149,8 @@ export default function ProfilePage() {
     );
   }
 
-  const displayedImage = session?.user?.image || user?.profileImage || '/logo.jpg';
-  const previewImage = selectedImagePath || displayedImage;
+  const displayedImage = normalizeImageSrc(user?.profileImage || session?.user?.image, '/logo.jpg');
+  const previewImage = normalizeImageSrc(selectedImagePath || displayedImage, '/logo.jpg');
 
   return (
     <div className="w-full min-h-screen relative bg-gray-100">

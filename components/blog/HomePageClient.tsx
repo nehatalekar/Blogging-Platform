@@ -5,16 +5,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { BlogPost } from "@/types/blog";
+import { isRemoteImageSrc, normalizeImageSrc } from "@/lib/utils";
 
 interface HomePageClientProps {
   initialPosts: BlogPost[];
-}
-
-function normalizeImagePath(imagePath: string, fallback: string): string {
-  if (!imagePath || typeof imagePath !== "string" || imagePath.trim() === "") {
-    return fallback;
-  }
-  return imagePath.startsWith("http") ? imagePath : `/${imagePath.replace(/^\/+/, "")}`;
 }
 
 export default function HomePageClient({ initialPosts }: HomePageClientProps) {
@@ -88,10 +82,11 @@ export default function HomePageClient({ initialPosts }: HomePageClientProps) {
                   <CardContent className="p-0 flex flex-col gap-0 h-full">
                     <div className="relative overflow-hidden h-48 bg-gray-200">
                       <Image
-                        src={normalizeImagePath(post.postImage, "/default-post.jpg")}
+                        src={normalizeImageSrc(post.postImage, "/default-post.jpg")}
                         alt={post.title}
                         width={600}
                         height={360}
+                        unoptimized={isRemoteImageSrc(post.postImage)}
                         className="w-full h-48 object-cover hover:scale-110 transition-transform duration-300"
                       />
                     </div>
@@ -106,10 +101,11 @@ export default function HomePageClient({ initialPosts }: HomePageClientProps) {
                       <div className="flex items-center justify-between pt-4 border-t border-gray-100">
                         <div className="flex items-center gap-3 flex-1">
                           <Image
-                            src={normalizeImagePath(post.profileImage, "/profile.webp")}
+                            src={normalizeImageSrc(post.profileImage, "/profile.webp")}
                             alt={post.author}
                             width={40}
                             height={40}
+                            unoptimized={isRemoteImageSrc(post.profileImage)}
                             className="w-8 h-8 rounded-full object-cover border border-gray-200"
                           />
                           <div className="flex flex-col gap-0 flex-1">

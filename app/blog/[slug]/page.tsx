@@ -5,14 +5,11 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import BlogContent from "./BlogContent";
 import prisma from "@/lib/prisma";
+import { isRemoteImageSrc, normalizeImageSrc } from "@/lib/utils";
 
 type Props = {
   params: { slug: string };
 };
-
-function normalizeImagePath(imagePath: string) {
-  return imagePath.startsWith("http") ? imagePath : `/${imagePath.replace(/^\/+/, "")}`;
-}
 
 export default async function PostPage({ params }: Props) {
   const { slug } = await params; // Ensure params is awaited
@@ -63,11 +60,12 @@ export default async function PostPage({ params }: Props) {
           {image && (
             <div className="mt-8 rounded-xl overflow-hidden shadow-lg">
               <Image
-                src={normalizeImagePath(image)}
+                src={normalizeImageSrc(image)}
                 alt={title}
                 width={900}
                 height={400}
                 priority
+                unoptimized={isRemoteImageSrc(image)}
                 className="w-full h-auto object-cover hover:scale-105 transition-transform duration-300"
               />
             </div>

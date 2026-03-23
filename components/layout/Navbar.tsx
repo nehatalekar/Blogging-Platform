@@ -6,6 +6,7 @@ import { Bookmark, PenSquare, User } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useCallback } from "react";
+import { isRemoteImageSrc, normalizeImageSrc } from "@/lib/utils";
 
 
 export default function Navbar() {
@@ -46,11 +47,11 @@ export default function Navbar() {
         const res = await fetch('/api/user');
         if (res.ok) {
           const data = await res.json();
-          setProfileImage(data.user?.profileImage || null);
+          setProfileImage(normalizeImageSrc(data.user?.profileImage, "") || null);
         }
       } catch (err) {
         // Fallback to session image if API fails
-        setProfileImage((session as any)?.user?.image || null);
+        setProfileImage(normalizeImageSrc((session as any)?.user?.image, "") || null);
       }
     };
 
@@ -61,7 +62,7 @@ export default function Navbar() {
   const handleProfileUpdate = useCallback((e: Event) => {
     const detail = (e as CustomEvent).detail as { profileImage?: string | null } | undefined;
     if (detail && typeof detail.profileImage !== 'undefined') {
-      setProfileImage(detail.profileImage || null);
+      setProfileImage(normalizeImageSrc(detail.profileImage, "") || null);
     }
   }, []);
 
@@ -150,6 +151,7 @@ export default function Navbar() {
                     alt={(session as any)?.user?.name || 'Profile'}
                     width={1000}
                     height={1000}
+                    unoptimized={isRemoteImageSrc(profileImage)}
                     className="rounded-full object-cover w-12 h-12 p"
                   />
                 ) : (
